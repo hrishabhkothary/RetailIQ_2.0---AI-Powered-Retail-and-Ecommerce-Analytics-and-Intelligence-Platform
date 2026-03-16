@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>RetailIQ — Universal Analytics</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0b0f19;--surf:#161b22;--surf2:#1c2333;--bdr:#21262d;
+  --acc:#6366f1;--acc2:#4f46e5;--grn:#10b981;--amb:#f59e0b;
+  --red:#ef4444;--cyn:#06b6d4;--pur:#8b5cf6;--rose:#e11d48;
+  --txt:#e6edf3;--mut:#6b7280;--lt:#f3f4f6;--r:10px}
+body{background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif;display:flex;height:100vh;overflow:hidden}
+.sidebar{width:210px;background:var(--surf);border-right:1px solid var(--bdr);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.logo{padding:18px 14px 10px;border-bottom:1px solid var(--bdr)}
+.logo h1{font-size:1.15rem;font-weight:700;color:#fff}
+.logo span{font-size:.7rem;color:var(--mut);display:block;margin-top:2px}
+.nav-sec{padding:10px 10px 3px;font-size:.62rem;font-weight:700;color:var(--mut);letter-spacing:1.5px;text-transform:uppercase}
+.ni{display:flex;align-items:center;gap:8px;padding:8px 12px;margin:1px 6px;border-radius:7px;cursor:pointer;font-size:.84rem;color:var(--mut);transition:all .15s}
+.ni:hover{background:var(--surf2);color:var(--txt)}
+.ni.active{background:rgba(99,102,241,.15);color:var(--acc);font-weight:600}
+.ni .ic{width:16px;text-align:center;font-size:.95rem}
+.ds-panel{margin:auto 0 0;padding:10px;border-top:1px solid var(--bdr)}
+.ds-panel h4{font-size:.65rem;color:var(--mut);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.ds-row{display:flex;justify-content:space-between;font-size:.72rem;padding:2px 0;color:var(--mut)}
+.ds-row span:last-child{color:var(--acc);font-weight:600;font-size:.7rem}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.topbar{background:var(--surf);border-bottom:1px solid var(--bdr);padding:10px 20px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.topbar h2{font-size:.95rem;font-weight:600;flex:1}
+.page-content{flex:1;overflow-y:auto;padding:20px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border:none;border-radius:6px;font-size:.8rem;font-weight:500;cursor:pointer;transition:all .15s;text-decoration:none}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-p{background:var(--acc);color:#fff}.btn-p:hover:not(:disabled){background:var(--acc2)}
+.btn-g{background:var(--grn);color:#fff}.btn-g:hover:not(:disabled){background:#059669}
+.btn-a{background:var(--amb);color:#000}.btn-a:hover:not(:disabled){background:#d97706}
+.btn-r{background:var(--red);color:#fff}.btn-r:hover:not(:disabled){background:#dc2626}
+.btn-c{background:var(--cyn);color:#000}.btn-c:hover:not(:disabled){background:#0891b2}
+.btn-ghost{background:var(--surf2);color:var(--txt);border:1px solid var(--bdr)}.btn-ghost:hover:not(:disabled){background:var(--bdr)}
+.btn-sm{padding:4px 9px;font-size:.76rem}
+.spin{display:inline-block;width:11px;height:11px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .6s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:20px}
+.kpi-card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:14px;position:relative;overflow:hidden}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--acc)}
+.kpi-card.g::before{background:var(--grn)}.kpi-card.a::before{background:var(--amb)}
+.kpi-card.r::before{background:var(--red)}.kpi-card.c::before{background:var(--cyn)}
+.kpi-card.pu::before{background:var(--pur)}
+.kpi-lbl{font-size:.7rem;color:var(--mut);margin-bottom:5px;font-weight:500}
+.kpi-val{font-size:1.45rem;font-weight:700;color:#fff;line-height:1.1;word-break:break-all}
+.kpi-sub{font-size:.7rem;color:var(--mut);margin-top:3px}
+.kpi-sub.up{color:var(--grn)}.kpi-sub.dn{color:var(--red)}
+.sec-title{font-size:1rem;font-weight:700;color:#fff;margin-bottom:3px}
+.sec-sub{font-size:.8rem;color:var(--mut);margin-bottom:16px}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.chart-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px}
+.chart-card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);padding:14px}
+.chart-card.full{grid-column:1/-1}
+.chart-title{font-size:.83rem;font-weight:600;color:var(--txt);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.chart-wrap{position:relative}
+.tog-grp{display:flex;gap:3px}
+.tog{padding:3px 8px;border-radius:4px;font-size:.72rem;cursor:pointer;background:var(--surf2);color:var(--mut);border:1px solid var(--bdr);transition:all .15s}
+.tog.active{background:var(--acc);color:#fff;border-color:var(--acc)}
+.filter-bar{display:flex;gap:7px;align-items:center;flex-wrap:wrap;padding:10px 14px;background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);margin-bottom:16px}
+.filter-bar label{font-size:.75rem;color:var(--mut)}
+.filter-bar input,.filter-bar select{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);padding:4px 8px;border-radius:5px;font-size:.8rem;outline:none}
+.filter-bar input:focus,.filter-bar select:focus{border-color:var(--acc)}
+.tbl-wrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--bdr);margin-bottom:16px}
+table{width:100%;border-collapse:collapse;font-size:.79rem}
+th{background:var(--surf2);padding:8px 10px;text-align:left;font-size:.72rem;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--bdr)}
+td{padding:8px 10px;border-bottom:1px solid var(--bdr);color:var(--txt)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(99,102,241,.04)}
+.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:.68rem;font-weight:600}
+.b-acc{background:rgba(99,102,241,.15);color:#a5b4fc}
+.b-grn{background:rgba(16,185,129,.15);color:#34d399}
+.b-amb{background:rgba(245,158,11,.15);color:#fbbf24}
+.b-red{background:rgba(239,68,68,.15);color:#f87171}
+.b-cyn{background:rgba(6,182,212,.15);color:#22d3ee}
+.b-pur{background:rgba(139,92,246,.15);color:#a78bfa}
+.b-gray{background:rgba(107,114,128,.15);color:#9ca3af}
+.drop-zone{background:var(--surf);border:2px dashed var(--bdr);border-radius:var(--r);padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px}
+.drop-zone:hover,.drop-zone.over{border-color:var(--acc);background:rgba(99,102,241,.05)}
+.drop-icon{font-size:2.5rem;margin-bottom:10px}
+.drop-title{font-size:1rem;font-weight:600;color:var(--txt);margin-bottom:4px}
+.drop-sub{font-size:.8rem;color:var(--mut);margin-bottom:14px}
+.code-block{background:#161b22;border:1px solid var(--bdr);border-radius:7px;padding:12px 14px;font-family:'Courier New',monospace;font-size:.77rem;color:#7ee787;overflow-x:auto;white-space:pre;line-height:1.55;margin-top:8px}
+.empty{text-align:center;padding:48px;color:var(--mut)}
+.empty-icon{font-size:2.5rem;margin-bottom:8px}
+.empty-title{font-size:.88rem;font-weight:600;margin-bottom:4px}
+.empty-sub{font-size:.78rem}
+.page{display:none}.page.active{display:block}
+#toast-wrap{position:fixed;top:14px;right:14px;z-index:9999;display:flex;flex-direction:column;gap:7px;pointer-events:none}
+.toast{padding:9px 14px;border-radius:7px;font-size:.8rem;font-weight:500;pointer-events:all;animation:ti .2s;max-width:300px}
+.toast-success{background:#064e3b;color:#34d399;border:1px solid #065f46}
+.toast-error{background:#450a0a;color:#f87171;border:1px solid #7f1d1d}
+.toast-info{background:#1e1b4b;color:#a5b4fc;border:1px solid #3730a3}
+@keyframes ti{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.tag{display:inline-block;padding:2px 8px;background:var(--surf2);border:1px solid var(--bdr);border-radius:4px;font-size:.72rem;color:var(--mut);margin:2px}
+.col-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:.74rem;margin:2px;font-weight:500}
+.pill-date{background:rgba(6,182,212,.12);color:#22d3ee}
+.pill-amount{background:rgba(16,185,129,.12);color:#34d399}
+.pill-cat{background:rgba(99,102,241,.12);color:#a5b4fc}
+.pill-qty{background:rgba(245,158,11,.12);color:#fbbf24}
+.pill-id{background:rgba(107,114,128,.12);color:#9ca3af}
+.pill-numeric{background:rgba(139,92,246,.12);color:#a78bfa}
+.pill-text{background:rgba(31,41,55,.4);color:#6b7280}
+.pill-profit{background:rgba(16,185,129,.12);color:#34d399}
+.pill-rating{background:rgba(245,158,11,.12);color:#fbbf24}
+.schema-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:16px}
+.schema-card{background:var(--surf);border:1px solid var(--bdr);border-radius:8px;padding:12px}
+.schema-card h4{font-size:.78rem;font-weight:600;margin-bottom:6px;color:var(--txt)}
+.no-data-msg{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;text-align:center;color:var(--mut);padding:40px}
+.no-data-msg .big-icon{font-size:3rem;margin-bottom:12px}
+.no-data-msg h3{font-size:1.1rem;font-weight:600;color:var(--txt);margin-bottom:8px}
+.no-data-msg p{font-size:.85rem;line-height:1.7;max-width:380px}
+#no-data-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:10;display:none;flex-direction:column;align-items:center;justify-content:center}
+.upload-formats{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:12px 0}
+.fmt-tag{background:var(--surf2);border:1px solid var(--bdr);border-radius:5px;padding:4px 12px;font-size:.78rem;color:var(--txt);font-weight:500}
+@media(max-width:860px){.sidebar{width:46px}.logo h1,.logo span,.ni span,.ds-panel,.nav-sec{display:none}.ni{justify-content:center}.chart-grid,.chart-grid-3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="logo"><h1>RetailIQ</h1><span>Universal Analytics</span></div>
+  <div class="nav-sec">Overview</div>
+  <div class="ni active" onclick="go('overview')"><span class="ic">📊</span><span>Overview</span></div>
+  <div class="ni" onclick="go('trends')"><span class="ic">📈</span><span>Trends</span></div>
+  <div class="ni" onclick="go('categories')"><span class="ic">🏷️</span><span>Categories</span></div>
+  <div class="ni" onclick="go('distribution')"><span class="ic">📉</span><span>Distribution</span></div>
+  <div class="nav-sec">Intelligence</div>
+  <div class="ni" onclick="go('forecast')"><span class="ic">🔮</span><span>Forecast</span></div>
+  <div class="ni" onclick="go('segments')"><span class="ic">👥</span><span>Segments</span></div>
+  <div class="ni" onclick="go('anomalies')"><span class="ic">🚨</span><span>Anomalies</span></div>
+  <div class="ni" onclick="go('mlcenter')"><span class="ic">🤖</span><span>ML Center</span></div>
+  <div class="nav-sec">Data</div>
+  <div class="ni" onclick="go('profile')"><span class="ic">🔬</span><span>Data Profile</span></div>
+  <div class="ni" onclick="go('upload')"><span class="ic">⬆️</span><span>Upload Data</span></div>
+  <div class="ds-panel">
+    <h4>Active Dataset</h4>
+    <div class="ds-row"><span>Name</span><span id="ds-name" style="max-width:100px;overflow:hidden;text-overflow:ellipsis">—</span></div>
+    <div class="ds-row"><span>Rows</span><span id="ds-rows">—</span></div>
+    <div class="ds-row"><span>Cols</span><span id="ds-cols">—</span></div>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <h2 id="page-title">Overview Dashboard</h2>
+    <button class="btn btn-ghost btn-sm" onclick="go('upload')">⬆ Upload</button>
+    <button class="btn btn-p btn-sm" id="btn-pdf">⬇ PDF Report</button>
+    <button class="btn btn-ghost btn-sm" onclick="dlCSV()">⬇ CSV</button>
+  </div>
+  <div class="page-content">
+
+  <!-- NO DATA STATE -->
+  <div id="no-data-overlay" style="display:none">
+    <div class="no-data-msg">
+      <div class="big-icon">📂</div>
+      <h3>No Data Loaded Yet</h3>
+      <p>Upload any CSV, Excel, JSON, or Parquet file to start analysing. RetailIQ automatically detects column types and configures all charts and ML models.</p>
+      <div class="upload-formats">
+        <span class="fmt-tag">📄 CSV</span><span class="fmt-tag">📊 Excel</span>
+        <span class="fmt-tag">📋 JSON</span><span class="fmt-tag">🗜 Parquet</span><span class="fmt-tag">📑 TSV</span>
+      </div>
+      <button class="btn btn-p" onclick="go('upload')" style="margin-top:8px">⬆ Upload Your Data</button>
+    </div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div class="page active" id="page-overview">
+    <div class="sec-title">Overview Dashboard</div>
+    <div class="sec-sub" id="ov-subtitle">Live KPIs from your dataset</div>
+    <div class="kpi-grid" id="kpi-grid"></div>
+    <div class="chart-grid">
+      <div class="chart-card full">
+        <div class="chart-title" id="trend-title">Monthly Trend
+          <div class="tog-grp" id="freq-togs">
+            <div class="tog active" data-freq="M">Monthly</div>
+            <div class="tog" data-freq="W">Weekly</div>
+            <div class="tog" data-freq="Q">Quarterly</div>
+          </div>
+        </div>
+        <div class="chart-wrap" style="height:200px"><canvas id="ch-trend"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title" id="cat-donut-title">Top Categories</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="ch-cat-donut"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Growth Rate (MoM %)</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="ch-growth"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRENDS -->
+  <div class="page" id="page-trends">
+    <div class="sec-title">Trend Analysis</div>
+    <div class="sec-sub" id="trend-subtitle">Daily and periodic trends</div>
+    <div class="chart-card" style="margin-bottom:14px">
+      <div class="chart-title">Daily Trend
+        <div class="tog-grp">
+          <div class="tog active" data-days="30">30d</div>
+          <div class="tog" data-days="60">60d</div>
+          <div class="tog" data-days="90">90d</div>
+          <div class="tog" data-days="180">180d</div>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:220px"><canvas id="ch-daily"></canvas></div>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <div class="chart-title" id="topn-title">Top Values</div>
+        <div class="chart-wrap" style="height:250px"><canvas id="ch-topn"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Growth Table</div>
+        <div class="chart-wrap" style="height:250px;overflow-y:auto">
+          <table><thead><tr><th>Period</th><th>Value</th><th>Growth %</th></tr></thead>
+          <tbody id="growth-tbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CATEGORIES -->
+  <div class="page" id="page-categories">
+    <div class="sec-title">Category Analysis</div>
+    <div class="sec-sub">Breakdown by any categorical column</div>
+    <div class="filter-bar">
+      <label>Category Column:</label>
+      <select id="cat-col-sel" onchange="loadCatBreakdown()"></select>
+      <label>Value Column:</label>
+      <select id="val-col-sel" onchange="loadCatBreakdown()"></select>
+      <label>Top N:</label>
+      <select id="top-n-sel" onchange="loadCatBreakdown()">
+        <option value="10">10</option><option value="15" selected>15</option>
+        <option value="25">25</option><option value="50">50</option>
+      </select>
+    </div>
+    <div class="chart-grid">
+      <div class="chart-card full">
+        <div class="chart-title" id="cat-bar-title">Category Breakdown</div>
+        <div class="chart-wrap" style="height:280px"><canvas id="ch-cat-bar"></canvas></div>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>Category</th><th>Total Value</th><th>Count</th><th>Average</th><th>% Share</th></tr></thead>
+      <tbody id="cat-tbody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- DISTRIBUTION -->
+  <div class="page" id="page-distribution">
+    <div class="sec-title">Distribution Analysis</div>
+    <div class="sec-sub">Numeric distributions and correlations</div>
+    <div class="filter-bar">
+      <label>Column:</label>
+      <select id="dist-col-sel" onchange="loadDistribution()"></select>
+      <label>Bins:</label>
+      <select id="bins-sel" onchange="loadDistribution()">
+        <option value="15">15</option><option value="20" selected>20</option>
+        <option value="30">30</option><option value="50">50</option>
+      </select>
+    </div>
+    <div class="chart-card" style="margin-bottom:14px">
+      <div class="chart-title" id="dist-title">Value Distribution</div>
+      <div class="chart-wrap" style="height:220px"><canvas id="ch-dist"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Correlation Matrix</div>
+      <div id="corr-table" style="overflow-x:auto"></div>
+    </div>
+  </div>
+
+  <!-- FORECAST -->
+  <div class="page" id="page-forecast">
+    <div class="sec-title">Demand / Value Forecast</div>
+    <div class="sec-sub" id="fc-subtitle">Random Forest — auto-discovers date and value columns</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="btn btn-p btn-sm" id="btn-forecast">⚡ Train Forecast Model</button>
+    </div>
+    <div class="chart-card" style="margin-bottom:14px">
+      <div class="chart-title">30-Day Forecast (predicted vs lower/upper bounds)</div>
+      <div class="chart-wrap" style="height:220px"><canvas id="ch-fc"></canvas></div>
+    </div>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>Date</th><th>Predicted</th><th>Low (safe order)</th><th>High (max order)</th></tr></thead>
+      <tbody id="fc-tbody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- SEGMENTS -->
+  <div class="page" id="page-segments">
+    <div class="sec-title">Data Segmentation</div>
+    <div class="sec-sub">K-Means clustering on all numeric columns</div>
+    <div class="filter-bar">
+      <label>Number of Segments:</label>
+      <select id="k-sel">
+        <option value="3">3</option><option value="4">4</option>
+        <option value="5" selected>5</option><option value="6">6</option>
+        <option value="7">7</option>
+      </select>
+      <button class="btn btn-p btn-sm" id="btn-seg">⚡ Run Segmentation</button>
+    </div>
+    <div class="kpi-grid" id="seg-kpis"></div>
+    <div class="chart-card" style="margin-bottom:14px">
+      <div class="chart-title">Segment Distribution</div>
+      <div class="chart-wrap" style="height:220px"><canvas id="ch-seg"></canvas></div>
+    </div>
+    <div class="tbl-wrap" id="seg-table-wrap" style="display:none">
+      <table id="seg-table"><thead></thead><tbody></tbody></table>
+    </div>
+  </div>
+
+  <!-- ANOMALIES -->
+  <div class="page" id="page-anomalies">
+    <div class="sec-title">Anomaly Detection</div>
+    <div class="sec-sub">Isolation Forest — statistical outliers across all numeric columns</div>
+    <div class="filter-bar">
+      <label>Contamination %:</label>
+      <select id="cont-sel">
+        <option value="0.03">3%</option><option value="0.05" selected>5%</option>
+        <option value="0.10">10%</option>
+      </select>
+      <button class="btn btn-r btn-sm" id="btn-anom">⚡ Run Detector</button>
+    </div>
+    <div class="chart-card" style="margin-bottom:14px">
+      <div class="chart-title">Anomaly Score Distribution</div>
+      <div class="chart-wrap" style="height:200px"><canvas id="ch-anom"></canvas></div>
+    </div>
+    <div class="tbl-wrap">
+      <table id="anom-table"><thead></thead><tbody></tbody></table>
+    </div>
+  </div>
+
+  <!-- ML CENTER -->
+  <div class="page" id="page-mlcenter">
+    <div class="sec-title">ML Model Center</div>
+    <div class="sec-sub">Train, manage, and monitor all ML models</div>
+    <div class="chart-grid" style="margin-bottom:14px">
+      <div class="chart-card"><div class="chart-title">🌲 Forecast (Random Forest)</div>
+        <p style="font-size:.8rem;color:var(--mut);margin-bottom:10px">Auto-discovers date and numeric columns. Trains on time-lag features. 30-day forward forecast.</p>
+        <button class="btn btn-p btn-sm" onclick="runML('forecast')">⚡ Train</button></div>
+      <div class="chart-card"><div class="chart-title">👥 Segmentation (K-Means)</div>
+        <p style="font-size:.8rem;color:var(--mut);margin-bottom:10px">Clusters rows using all numeric columns. Schema-independent — works on any dataset.</p>
+        <button class="btn btn-sm" style="background:var(--pur);color:#fff" onclick="runML('segmentation')">⚡ Train</button></div>
+      <div class="chart-card"><div class="chart-title">🚨 Anomaly (Isolation Forest)</div>
+        <p style="font-size:.8rem;color:var(--mut);margin-bottom:10px">Flags statistical outliers using all numeric features. 5% contamination by default.</p>
+        <button class="btn btn-r btn-sm" onclick="runML('anomaly')">⚡ Train</button></div>
+      <div class="chart-card"><div class="chart-title">📈 Trend Analysis</div>
+        <p style="font-size:.8rem;color:var(--mut);margin-bottom:10px">In-memory rolling stats: MoM growth, volatility, peak period. No .pkl saved.</p>
+        <button class="btn btn-a btn-sm" onclick="runML('trend')">⚡ Run</button></div>
+    </div>
+    <div style="margin-bottom:14px">
+      <button class="btn btn-g" id="btn-full-pipeline">▶ Run Full Pipeline (all models)</button>
+    </div>
+    <div class="sec-title" style="margin-bottom:10px">Training History</div>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>Model</th><th>Metric</th><th>Value</th><th>Trained At</th></tr></thead>
+      <tbody id="metrics-tbody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="page" id="page-profile">
+    <div class="sec-title">Data Profile</div>
+    <div class="sec-sub">Auto-detected column roles and quality metrics</div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-lbl">Total Rows</div><div class="kpi-val" id="pr-rows">—</div></div>
+      <div class="kpi-card a"><div class="kpi-lbl">Total Columns</div><div class="kpi-val" id="pr-cols">—</div></div>
+      <div class="kpi-card r"><div class="kpi-lbl">Missing Values</div><div class="kpi-val" id="pr-missing">—</div></div>
+      <div class="kpi-card c"><div class="kpi-lbl">Duplicate Rows</div><div class="kpi-val" id="pr-dupes">—</div></div>
+    </div>
+    <div class="sec-title" style="margin-bottom:8px">Detected Column Roles</div>
+    <div id="schema-pills" style="margin-bottom:16px"></div>
+    <div class="tbl-wrap">
+      <table><thead><tr><th>Column</th><th>Detected Role</th><th>Data Type</th><th>Null %</th><th>Unique</th><th>Sample Values</th><th>Min</th><th>Max</th></tr></thead>
+      <tbody id="profile-tbody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- UPLOAD -->
+  <div class="page" id="page-upload">
+    <div class="sec-title">Upload Data</div>
+    <div class="sec-sub">Upload any structured file — schema is auto-detected</div>
+    <div class="drop-zone" id="dz" onclick="document.getElementById('fi').click()">
+      <div class="drop-icon">📂</div>
+      <div class="drop-title" id="dz-title">Drag & Drop Your File Here</div>
+      <div class="drop-sub">CSV · Excel · JSON · Parquet · TSV — any number of columns, any schema</div>
+      <button class="btn btn-p" onclick="event.stopPropagation()">Choose File</button>
+      <input type="file" id="fi" accept=".csv,.xlsx,.xls,.json,.parquet,.tsv" style="display:none" onchange="onFileSelect(this.files[0])"/>
+    </div>
+    <button class="btn btn-p" id="btn-upload" style="width:100%;margin-bottom:20px" disabled>⬆ Upload & Analyse</button>
+
+    <div class="chart-card" style="margin-bottom:14px">
+      <div class="chart-title">Supported File Formats</div>
+      <table><thead><tr><th>Format</th><th>Extension</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>CSV</td><td>.csv</td><td>Any delimiter, any encoding (UTF-8, Latin-1, CP1252 auto-detected)</td></tr>
+        <tr><td>Excel</td><td>.xlsx, .xls</td><td>First sheet loaded automatically</td></tr>
+        <tr><td>JSON</td><td>.json</td><td>Array of objects or records orientation</td></tr>
+        <tr><td>Parquet</td><td>.parquet</td><td>High-performance columnar format</td></tr>
+        <tr><td>TSV</td><td>.tsv</td><td>Tab-separated values</td></tr>
+      </tbody></table>
+    </div>
+
+    <div class="chart-card" style="margin-bottom:14px">
+      <div class="chart-title">Active Datasets</div>
+      <div id="dataset-list"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Kaggle Datasets That Work Great</div>
+      <table><thead><tr><th>Dataset</th><th>Why It Works</th><th>Key Columns Detected</th></tr></thead>
+      <tbody>
+        <tr><td>Superstore Sales</td><td>Classic retail dataset with clear revenue/date/category cols</td><td>Order Date, Sales, Category</td></tr>
+        <tr><td>E-Commerce UK</td><td>500K transactions from UK retailer</td><td>InvoiceDate, UnitPrice, Quantity</td></tr>
+        <tr><td>Brazilian E-Commerce (Olist)</td><td>Multi-table orders dataset</td><td>order_purchase_timestamp, price</td></tr>
+        <tr><td>Walmart Sales</td><td>Weekly store sales data</td><td>Date, Weekly_Sales, Store</td></tr>
+        <tr><td>Global Superstore</td><td>Multi-country retail data</td><td>Order Date, Sales, Profit, Category</td></tr>
+        <tr><td>Amazon Sales</td><td>Product-level sales</td><td>Date, Amount, Category, Status</td></tr>
+        <tr><td>Any Financial CSV</td><td>Works on bank statements, invoices, P&amp;L</td><td>Auto-detected</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+
+  </div>
+</div>
+<div id="toast-wrap"></div>
+
+<script>
+Chart.defaults.color='#6b7280';
+Chart.defaults.borderColor='#21262d';
+Chart.defaults.font.family="'Segoe UI',system-ui,sans-serif";
+Chart.defaults.font.size=11;
+const PAL=['#6366f1','#10b981','#f59e0b','#06b6d4','#8b5cf6','#ef4444','#ec4899','#14b8a6','#f97316','#84cc16','#3b82f6','#a855f7','#f43f5e'];
+const charts={};
+let schemaCache=null, kpiCache=null;
+
+// ── Utils ────────────────────────────────────────────────────────────────────
+function fmt(v){
+  if(v==null)return'—';
+  v=parseFloat(v);
+  if(isNaN(v))return String(v);
+  if(Math.abs(v)>=1e9)return(v/1e9).toFixed(2)+'B';
+  if(Math.abs(v)>=1e6)return(v/1e6).toFixed(2)+'M';
+  if(Math.abs(v)>=1e3)return(v/1e3).toFixed(1)+'K';
+  return v.toLocaleString('en',{maximumFractionDigits:2});
+}
+function fmtN(n){return parseInt(n||0).toLocaleString()}
+function toast(m,t='info',d=3500){
+  const w=document.getElementById('toast-wrap');
+  const el=document.createElement('div');
+  el.className=`toast toast-${t}`;el.textContent=m;
+  w.appendChild(el);setTimeout(()=>el.remove(),d);
+}
+function setLoad(btn,on){
+  if(!btn)return;
+  if(on){btn._h=btn.innerHTML;btn.innerHTML='<span class="spin"></span> Working…';btn.disabled=true}
+  else{btn.innerHTML=btn._h||btn.innerHTML;btn.disabled=false}
+}
+async function api(url,opts){
+  const r=await fetch(url,opts);
+  return r.json();
+}
+function mkChart(id,type,data,opts={}){
+  const ctx=document.getElementById(id);if(!ctx)return;
+  if(charts[id]){charts[id].destroy();delete charts[id]}
+  charts[id]=new Chart(ctx,{type,data,options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{labels:{color:'#9ca3af',boxWidth:10,font:{size:10}}}},
+    scales:type!=='doughnut'&&type!=='pie'?{
+      x:{ticks:{color:'#6b7280',maxTicksLimit:10},grid:{color:'#21262d'}},
+      y:{ticks:{color:'#6b7280'},grid:{color:'#21262d'}}
+    }:{},
+    animation:{duration:350},...opts
+  }});
+}
+function dlCSV(){window.open('/api/export/csv','_blank')}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+const TITLES={overview:'Overview Dashboard',trends:'Trend Analysis',categories:'Category Analysis',
+  distribution:'Distribution Analysis',forecast:'Demand / Value Forecast',segments:'Data Segmentation',
+  anomalies:'Anomaly Detection',mlcenter:'ML Model Center',profile:'Data Profile',upload:'Upload Data'};
+const LOADERS={overview:loadOverview,trends:loadTrends,categories:loadCategories,
+  distribution:loadDistribution,forecast:loadForecast,segments:loadSegments,
+  anomalies:()=>{},mlcenter:loadMLCenter,profile:loadProfile};
+
+function go(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  const pageEl=document.getElementById('page-'+page);
+  if(pageEl) pageEl.classList.add('active');
+  const ni=document.querySelector(`[onclick="go('${page}')"]`);
+  if(ni) ni.classList.add('active');
+  document.getElementById('page-title').textContent=TITLES[page]||page;
+  // Hide overlay when navigating to upload
+  if(page==='upload'){
+    document.getElementById('no-data-overlay').style.display='none';
+  }
+  if(LOADERS[page]) LOADERS[page]();
+}
+
+async function checkNoData(){
+  const r=await api('/api/health');
+  const overlay=document.getElementById('no-data-overlay');
+  if(!r.has_data){
+    // Show overlay ONLY on non-upload pages; never block the upload page
+    const cur=currentPage();
+    if(cur==='upload'){
+      overlay.style.display='none';
+    } else {
+      overlay.style.display='flex';
+    }
+  } else {
+    overlay.style.display='none';
+  }
+}
+function currentPage(){
+  const a=document.querySelector('.ni.active');
+  if(!a)return'overview';
+  const fn=a.getAttribute('onclick');
+  return fn?fn.match(/go\('([^']+)'\)/)?.[1]||'overview':'overview';
+}
+
+async function loadSidebar(){
+  const r=await api('/api/kpis');
+  if(r.status==='ok'&&r.data){
+    const d=r.data;
+    document.getElementById('ds-name').textContent=d.dataset_name||'—';
+    document.getElementById('ds-rows').textContent=fmtN(d.total_rows);
+    document.getElementById('ds-cols').textContent=d.total_columns||'—';
+    kpiCache=d;
+  }
+}
+setInterval(loadSidebar,30000);
+
+// ── Overview ──────────────────────────────────────────────────────────────────
+async function loadOverview(){
+  const r=await api('/api/kpis');
+  if(r.status!=='ok')return;
+  const d=r.data;
+  kpiCache=d;
+  loadSidebar();
+
+  const grid=document.getElementById('kpi-grid');
+  const cards=[];
+  if(d.total_rows)     cards.push({l:'Total Rows',v:fmtN(d.total_rows),s:'Records loaded',cls:''});
+  if(d.total_amount!=null) cards.push({l:d.amount_label||'Total Amount',v:fmt(d.total_amount),s:`Avg: ${fmt(d.avg_amount)}`,cls:'g'});
+  if(d.total_qty!=null)    cards.push({l:d.qty_label||'Total Qty',v:fmt(d.total_qty),s:`Avg: ${fmt(d.avg_qty)}`,cls:'a'});
+  if(d.unique_categories)  cards.push({l:d.cat_label||'Categories',v:fmtN(d.unique_categories),s:'Unique values',cls:'c'});
+  if(d.mom_growth!=null){
+    const up=parseFloat(d.mom_growth||0)>=0;
+    cards.push({l:'MoM Growth',v:(up?'+':'')+d.mom_growth+'%',s:'Month-over-month',cls:'pu',delta:up?'up':'dn'});
+  }
+  if(d.date_from) cards.push({l:d.date_label||'Date Range',v:d.date_from,s:`to ${d.date_to}`,cls:'c'});
+  if(d.date_span_days) cards.push({l:'Date Span',v:d.date_span_days+' days',s:'Total coverage',cls:''});
+
+  // numeric summaries
+  Object.entries(d.numeric_summaries||{}).slice(0,3).forEach(([col,s])=>{
+    cards.push({l:`${col} (sum)`,v:fmt(s.sum),s:`avg: ${fmt(s.mean)}`,cls:'pu'});
+  });
+
+  grid.innerHTML=cards.map(c=>`
+    <div class="kpi-card ${c.cls||''}">
+      <div class="kpi-lbl">${c.l}</div>
+      <div class="kpi-val">${c.v}</div>
+      <div class="kpi-sub ${c.delta||''}">${c.s}</div>
+    </div>`).join('');
+  if(d.amount_label) document.getElementById('ov-subtitle').textContent=
+    `Analysing: ${d.amount_label}${d.date_label?' by '+d.date_label:''}${d.cat_label?' — '+d.cat_label:''}`;
+
+  // Trend chart
+  const tr=await api('/api/timeseries?freq=M');
+  if(tr.status==='ok'&&tr.data.length){
+    const lbl=d.amount_label||'value';
+    document.getElementById('trend-title').childNodes[0].textContent=`Monthly ${lbl} `;
+    mkChart('ch-trend','line',{
+      labels:tr.data.map(x=>x.period),
+      datasets:[{label:lbl,data:tr.data.map(x=>x.value),borderColor:'#6366f1',
+        backgroundColor:'rgba(99,102,241,.1)',fill:true,tension:0.4,pointRadius:2,borderWidth:2}]
+    },{plugins:{legend:{display:false}}});
+  }
+
+  // Category donut
+  const ca=await api('/api/category?top_n=8');
+  if(ca.status==='ok'&&ca.data.length){
+    if(kpiCache?.cat_label) document.getElementById('cat-donut-title').textContent=`By ${kpiCache.cat_label}`;
+    mkChart('ch-cat-donut','doughnut',{
+      labels:ca.data.map(x=>x.label),
+      datasets:[{data:ca.data.map(x=>x.value),backgroundColor:PAL,borderWidth:0}]
+    });
+  }
+
+  // Growth chart
+  const gr=await api('/api/growth?freq=M');
+  if(gr.status==='ok'&&gr.data.length){
+    const pos=gr.data.map(x=>x.growth_pct>=0?x.growth_pct:0);
+    const neg=gr.data.map(x=>x.growth_pct<0?x.growth_pct:0);
+    mkChart('ch-growth','bar',{
+      labels:gr.data.map(x=>x.period),
+      datasets:[
+        {label:'Positive',data:pos,backgroundColor:'rgba(16,185,129,.7)',borderRadius:3},
+        {label:'Negative',data:neg,backgroundColor:'rgba(239,68,68,.7)',borderRadius:3},
+      ]
+    },{plugins:{legend:{display:false}},scales:{x:{stacked:true},y:{stacked:true,ticks:{color:'#6b7280'},grid:{color:'#21262d'}}}});
+  }
+}
+
+// ── Trends ────────────────────────────────────────────────────────────────────
+let dailyDays=30;
+async function loadTrends(){
+  loadDaily(dailyDays);
+  const tn=await api(`/api/top-n?n=20`);
+  if(tn.status==='ok'&&tn.data.length){
+    const lbl=schemaCache?.primary_cat||'label';
+    document.getElementById('topn-title').textContent=`Top Values by ${schemaCache?.primary_cat||schemaCache?.primary_amount||'count'}`;
+    mkChart('ch-topn','bar',{
+      labels:tn.data.map(x=>String(x.label).substring(0,22)),
+      datasets:[{label:'Value',data:tn.data.map(x=>x.value),backgroundColor:PAL,borderRadius:3}]
+    },{indexAxis:'y',plugins:{legend:{display:false}}});
+  }
+  const gr=await api('/api/growth');
+  const tb=document.getElementById('growth-tbody');
+  if(gr.status==='ok'){
+    tb.innerHTML=gr.data.map(x=>{
+      const g=parseFloat(x.growth_pct||0);
+      const cl=g>=0?'b-grn':'b-red';
+      return`<tr><td>${x.period}</td><td>${fmt(x.value)}</td>
+        <td><span class="badge ${cl}">${g>=0?'+':''}${g}%</span></td></tr>`;
+    }).join('')||'<tr><td colspan="3" style="text-align:center;color:var(--mut)">No data</td></tr>';
+  }
+}
+async function loadDaily(days){
+  dailyDays=days;
+  const r=await api(`/api/daily-trend?days=${days}`);
+  if(r.status==='ok'){
+    const lbl=kpiCache?.amount_label||'value';
+    mkChart('ch-daily','line',{
+      labels:r.data.map(x=>x.date),
+      datasets:[{label:lbl,data:r.data.map(x=>x.value),borderColor:'#10b981',
+        backgroundColor:'rgba(16,185,129,.1)',fill:true,tension:0.3,pointRadius:1,borderWidth:2}]
+    },{plugins:{legend:{display:false}}});
+  }
+}
+
+// ── Categories ────────────────────────────────────────────────────────────────
+async function loadCategories(){
+  await loadSchemaIntoSelects();
+  loadCatBreakdown();
+}
+async function loadSchemaIntoSelects(){
+  if(!schemaCache){
+    const r=await api('/api/schema');
+    if(r.status==='ok') schemaCache=r.data;
+  }
+  if(!schemaCache) return;
+  const cs=document.getElementById('cat-col-sel');
+  const vs=document.getElementById('val-col-sel');
+  if(cs.options.length<=1){
+    cs.innerHTML='';
+    (schemaCache.cat_cols||[]).forEach(c=>{const o=new Option(c,c);cs.add(o)});
+    if(schemaCache.primary_cat) cs.value=schemaCache.primary_cat;
+  }
+  if(vs.options.length<=1){
+    vs.innerHTML='<option value="">Count</option>';
+    [...(schemaCache.amount_cols||[]),...(schemaCache.qty_cols||[]),...(schemaCache.numeric_cols||[])].forEach(c=>{
+      const o=new Option(c,c);vs.add(o);
+    });
+    if(schemaCache.primary_amount) vs.value=schemaCache.primary_amount;
+  }
+  // Distribution col
+  const ds=document.getElementById('dist-col-sel');
+  if(ds.options.length<=1){
+    ds.innerHTML='';
+    [...(schemaCache.amount_cols||[]),...(schemaCache.qty_cols||[]),...(schemaCache.numeric_cols||[])].forEach(c=>{
+      const o=new Option(c,c);ds.add(o);
+    });
+    if(schemaCache.primary_amount) ds.value=schemaCache.primary_amount;
+  }
+}
+async function loadCatBreakdown(){
+  const cat=document.getElementById('cat-col-sel')?.value;
+  const val=document.getElementById('val-col-sel')?.value;
+  const n=document.getElementById('top-n-sel')?.value||15;
+  let url=`/api/category?top_n=${n}`;
+  if(cat) url+=`&cat_col=${encodeURIComponent(cat)}`;
+  if(val) url+=`&val_col=${encodeURIComponent(val)}`;
+  const r=await api(url);
+  if(r.status!=='ok'||!r.data.length) return;
+  const data=r.data;
+  document.getElementById('cat-bar-title').textContent=`${cat||'Category'} by ${val||'count'}`;
+  mkChart('ch-cat-bar','bar',{
+    labels:data.map(x=>String(x.label).substring(0,25)),
+    datasets:[{label:val||'count',data:data.map(x=>x.value),backgroundColor:PAL,borderRadius:4}]
+  },{indexAxis:'y',plugins:{legend:{display:false}}});
+  const tb=document.getElementById('cat-tbody');
+  tb.innerHTML=data.map(x=>`<tr>
+    <td><b>${x.label||'—'}</b></td>
+    <td>${fmt(x.value)}</td><td>${fmtN(x.count)}</td>
+    <td>${fmt(x.average)}</td>
+    <td><span class="badge b-acc">${x.pct||0}%</span></td>
+  </tr>`).join('');
+}
+
+// ── Distribution ──────────────────────────────────────────────────────────────
+async function loadDistribution(){
+  await loadSchemaIntoSelects();
+  const col=document.getElementById('dist-col-sel')?.value||'';
+  const bins=document.getElementById('bins-sel')?.value||20;
+  const r=await api(`/api/distribution?col=${encodeURIComponent(col)}&bins=${bins}`);
+  if(r.status==='ok'&&r.data.length){
+    document.getElementById('dist-title').textContent=`Distribution of ${col||'value'}`;
+    mkChart('ch-dist','bar',{
+      labels:r.data.map(x=>x.bin),
+      datasets:[{label:'Count',data:r.data.map(x=>x.count),backgroundColor:'rgba(99,102,241,.6)',borderRadius:3}]
+    },{plugins:{legend:{display:false}}});
+  }
+  // Correlation table
+  const cr=await api('/api/correlation');
+  if(cr.status==='ok'&&Object.keys(cr.data||{}).length>0){
+    const cols=Object.keys(cr.data);
+    let html=`<table style="font-size:.75rem;min-width:${cols.length*80+120}px"><thead><tr><th></th>`;
+    cols.forEach(c=>html+=`<th style="text-align:center">${c.substring(0,12)}</th>`);
+    html+='</tr></thead><tbody>';
+    cols.forEach(r=>{
+      html+=`<tr><th style="text-align:left;padding:6px 10px">${r.substring(0,14)}</th>`;
+      cols.forEach(c=>{
+        const v=cr.data[r]?.[c];
+        if(v==null){html+='<td>—</td>';return}
+        const av=Math.abs(parseFloat(v||0));
+        const bg=av>0.7?'rgba(99,102,241,.3)':av>0.4?'rgba(99,102,241,.15)':'transparent';
+        html+=`<td style="text-align:center;background:${bg};padding:5px 8px">${parseFloat(v).toFixed(2)}</td>`;
+      });
+      html+='</tr>';
+    });
+    html+='</tbody></table>';
+    document.getElementById('corr-table').innerHTML=html;
+  } else {
+    document.getElementById('corr-table').innerHTML='<p style="color:var(--mut);padding:12px;font-size:.82rem">Need 2+ numeric columns for correlation.</p>';
+  }
+}
+
+// ── Forecast ──────────────────────────────────────────────────────────────────
+async function loadForecast(){
+  if(schemaCache?.primary_date&&schemaCache?.primary_amount)
+    document.getElementById('fc-subtitle').textContent=
+      `Uses: ${schemaCache.primary_date} → ${schemaCache.primary_amount}`;
+}
+document.getElementById('btn-forecast').addEventListener('click',async()=>{
+  const btn=document.getElementById('btn-forecast');setLoad(btn,true);
+  toast('Training forecast model…','info',30000);
+  const r=await api('/api/ml/forecast',{method:'POST'});
+  setLoad(btn,false);
+  if(r.status!=='ok'){toast('Forecast failed: '+(r.data?.error||r.message),'error',8000);return}
+  const d=r.data;
+  if(d.error){toast('Cannot forecast: '+d.error,'error',8000);return}
+  toast(`Forecast trained — R²: ${d.r2}  MAE: ${d.mae}`,'success');
+  const fc=d.forecasts||[];
+  if(fc.length){
+    mkChart('ch-fc','line',{
+      labels:fc.map(x=>x.date),
+      datasets:[
+        {label:'Predicted',data:fc.map(x=>x.predicted),borderColor:'#6366f1',tension:0.3,pointRadius:2,borderWidth:2,fill:false},
+        {label:'Lower',data:fc.map(x=>x.lower),borderColor:'rgba(16,185,129,.5)',borderDash:[4,4],tension:0.3,pointRadius:0,borderWidth:1,fill:false},
+        {label:'Upper',data:fc.map(x=>x.upper),borderColor:'rgba(239,68,68,.5)',borderDash:[4,4],tension:0.3,pointRadius:0,borderWidth:1,fill:false},
+      ]
+    },{plugins:{legend:{labels:{color:'#9ca3af'}}}});
+    document.getElementById('fc-tbody').innerHTML=fc.map(x=>`<tr>
+      <td>${x.date}</td>
+      <td><b>${fmt(x.predicted)}</b></td>
+      <td style="color:#34d399">${fmt(x.lower)}</td>
+      <td style="color:#f87171">${fmt(x.upper)}</td>
+    </tr>`).join('');
+  }
+});
+
+// ── Segments ──────────────────────────────────────────────────────────────────
+async function loadSegments(){}
+document.getElementById('btn-seg').addEventListener('click',async()=>{
+  const btn=document.getElementById('btn-seg');setLoad(btn,true);
+  const k=parseInt(document.getElementById('k-sel').value);
+  toast('Running segmentation…','info',30000);
+  const r=await api('/api/ml/segmentation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({k})});
+  setLoad(btn,false);
+  if(r.status!=='ok'){toast('Segmentation failed: '+(r.data?.error||r.message),'error',8000);return}
+  if(r.data?.error){toast('Cannot segment: '+r.data.error,'error',8000);return}
+  toast('Segmentation complete!','success');
+  const segs=r.data.segments||[];
+  const cols=r.data.num_cols||[];
+  const SEG_COLS=['#6366f1','#10b981','#f59e0b','#06b6d4','#8b5cf6','#ef4444','#ec4899'];
+  // KPI cards
+  document.getElementById('seg-kpis').innerHTML=segs.map((s,i)=>{
+    const fc=SEG_COLS[i%SEG_COLS.length];
+    const mc=cols[0]?fmt(s[`avg_${cols[0]}`]||0):'—';
+    return`<div class="kpi-card" style="border-top:3px solid ${fc}">
+      <div class="kpi-lbl">${s.segment}</div>
+      <div class="kpi-val" style="color:${fc}">${fmtN(s.count)}</div>
+      <div class="kpi-sub">Avg ${cols[0]||''}:  ${mc}</div>
+    </div>`;
+  }).join('');
+  // Donut
+  mkChart('ch-seg','doughnut',{
+    labels:segs.map(s=>s.segment),
+    datasets:[{data:segs.map(s=>s.count),backgroundColor:SEG_COLS.slice(0,segs.length),borderWidth:0}]
+  });
+  // Table
+  const wrap=document.getElementById('seg-table-wrap');wrap.style.display='';
+  const tbl=document.getElementById('seg-table');
+  let hdr=`<tr><th>Segment</th><th>Count</th>`;
+  cols.slice(0,5).forEach(c=>hdr+=`<th>Avg ${c.substring(0,14)}</th>`);
+  hdr+='</tr>';
+  tbl.querySelector('thead').innerHTML=hdr;
+  tbl.querySelector('tbody').innerHTML=segs.map((s,i)=>{
+    const fc=SEG_COLS[i%SEG_COLS.length];
+    let row=`<tr><td><span class="badge" style="background:${fc}22;color:${fc}">${s.segment}</span></td><td>${fmtN(s.count)}</td>`;
+    cols.slice(0,5).forEach(c=>row+=`<td>${fmt(s[`avg_${c}`])}</td>`);
+    return row+'</tr>';
+  }).join('');
+});
+
+// ── Anomalies ─────────────────────────────────────────────────────────────────
+document.getElementById('btn-anom').addEventListener('click',async()=>{
+  const btn=document.getElementById('btn-anom');setLoad(btn,true);
+  const c=parseFloat(document.getElementById('cont-sel').value);
+  toast('Running anomaly detector…','info',30000);
+  const r=await api('/api/ml/anomaly',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contamination:c})});
+  setLoad(btn,false);
+  if(r.status!=='ok'){toast('Failed: '+(r.data?.error||r.message),'error',8000);return}
+  if(r.data?.error){toast('Cannot run: '+r.data.error,'error',8000);return}
+  toast(`Flagged ${r.data.flagged} anomalies out of ${r.data.total_scored}`,'success');
+  const anoms=r.data.anomalies||[];
+  const cols=r.data.num_cols||[];
+  // Chart
+  const top30=anoms.slice(0,30);
+  mkChart('ch-anom','bar',{
+    labels:top30.map((_,i)=>`#${i+1}`),
+    datasets:[{label:'Anomaly Score',data:top30.map(x=>x.anomaly_score),
+      backgroundColor:top30.map(x=>x.anomaly_score<-0.1?'rgba(239,68,68,.7)':'rgba(245,158,11,.7)'),borderRadius:3}]
+  },{plugins:{legend:{display:false}}});
+  // Table
+  const tbl=document.getElementById('anom-table');
+  let hdr='<tr><th>#</th><th>Score</th>';
+  cols.slice(0,5).forEach(c=>hdr+=`<th>${c.substring(0,16)}</th>`);
+  hdr+='</tr>';
+  tbl.querySelector('thead').innerHTML=hdr;
+  tbl.querySelector('tbody').innerHTML=anoms.slice(0,50).map((a,i)=>{
+    const s=parseFloat(a.anomaly_score||0);
+    const cl=s<-0.1?'b-red':'b-amb';
+    let row=`<tr><td>${i+1}</td><td><span class="badge ${cl}">${s.toFixed(4)}</span></td>`;
+    cols.slice(0,5).forEach(c=>row+=`<td>${fmt(a[c])}</td>`);
+    return row+'</tr>';
+  }).join('');
+});
+
+// ── ML Center ─────────────────────────────────────────────────────────────────
+async function loadMLCenter(){
+  const r=await api('/api/ml/metrics');
+  const tb=document.getElementById('metrics-tbody');
+  if(r.status==='ok'&&r.data.length){
+    tb.innerHTML=r.data.map(m=>{
+      const entries=Object.entries(m).filter(([k])=>!['model','trained_at'].includes(k));
+      return entries.map(([k,v])=>`<tr>
+        <td><span class="badge b-pur">${m.model}</span></td>
+        <td>${k}</td><td><b>${typeof v==='number'?v.toFixed(4):v}</b></td>
+        <td style="font-size:.73rem;color:var(--mut)">${m.trained_at}</td>
+      </tr>`).join('');
+    }).join('');
+  } else {
+    tb.innerHTML='<tr><td colspan="4"><div class="empty"><div class="empty-icon">🤖</div><div class="empty-title">No training runs yet</div></div></td></tr>';
+  }
+}
+async function runML(model){
+  toast(`Training ${model}…`,'info',60000);
+  const url=`/api/ml/${model==='trend'?'trend':model==='forecast'?'forecast':model==='segmentation'?'segmentation':'anomaly'}`;
+  const r=await api(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})});
+  if(r.status==='ok') toast(`${model} complete!`,'success');
+  else toast(`${model} failed: ${r.message}`,'error',8000);
+  loadMLCenter();
+}
+document.getElementById('btn-full-pipeline').addEventListener('click',async()=>{
+  const btn=document.getElementById('btn-full-pipeline');setLoad(btn,true);
+  const r=await api('/api/ml/pipeline',{method:'POST'});
+  setLoad(btn,false);
+  toast(r.message||'Pipeline started','info',8000);
+  setTimeout(loadMLCenter,3000);
+});
+
+// ── Profile ───────────────────────────────────────────────────────────────────
+const ROLE_PILL={date:'pill-date',amount:'pill-amount',cat:'pill-cat',qty:'pill-qty',
+  id:'pill-id',numeric:'pill-numeric',text:'pill-text',profit:'pill-profit',rating:'pill-rating'};
+async function loadProfile(){
+  const r=await api('/api/profile');
+  if(r.status!=='ok') return;
+  const d=r.data;
+  document.getElementById('pr-rows').textContent=fmtN(d.n_rows);
+  document.getElementById('pr-cols').textContent=d.n_cols;
+  document.getElementById('pr-missing').textContent=fmtN(d.missing_total);
+  document.getElementById('pr-dupes').textContent=fmtN(d.duplicate_rows);
+
+  // Schema pills
+  const sc=await api('/api/schema');
+  if(sc.status==='ok'){
+    schemaCache=sc.data;
+    const pills=document.getElementById('schema-pills');
+    pills.innerHTML='';
+    const roles=[
+      ['Date Cols',sc.data.date_cols,'date'],
+      ['Amount Cols',sc.data.amount_cols,'amount'],
+      ['Category Cols',sc.data.cat_cols,'cat'],
+      ['Qty Cols',sc.data.qty_cols,'qty'],
+      ['Numeric Cols',sc.data.numeric_cols,'numeric'],
+      ['ID Cols',sc.data.id_cols,'id'],
+    ];
+    roles.forEach(([lbl,cols,role])=>{
+      if(cols&&cols.length){
+        const sec=document.createElement('div');sec.style.marginBottom='6px';
+        sec.innerHTML=`<span style="font-size:.72rem;color:var(--mut);margin-right:6px">${lbl}:</span>`;
+        cols.forEach(c=>{
+          const sp=document.createElement('span');
+          sp.className=`col-pill ${ROLE_PILL[role]||'pill-text'}`;
+          sp.textContent=c;sec.appendChild(sp);
+        });
+        pills.appendChild(sec);
+      }
+    });
+  }
+
+  // Profile table
+  const tb=document.getElementById('profile-tbody');
+  tb.innerHTML=(d.columns||[]).map(c=>`<tr>
+    <td><b>${c.name}</b></td>
+    <td><span class="badge ${c.role==='amount'?'b-grn':c.role==='date'?'b-cyn':c.role==='cat'?'b-acc':'b-gray'}">${c.role}</span></td>
+    <td style="font-size:.75rem;color:var(--mut)">${c.dtype}</td>
+    <td>${c.null_pct}%</td>
+    <td>${fmtN(c.unique)}</td>
+    <td style="font-size:.73rem;color:var(--mut)">${(c.sample||[]).join(', ')}</td>
+    <td>${c.min!=null?fmt(c.min):'—'}</td>
+    <td>${c.max!=null?fmt(c.max):'—'}</td>
+  </tr>`).join('');
+}
+
+// ── Upload ────────────────────────────────────────────────────────────────────
+let selectedFile=null;
+function onFileSelect(f){
+  if(!f)return;selectedFile=f;
+  document.getElementById('dz-title').textContent=f.name;
+  document.getElementById('btn-upload').disabled=false;
+}
+const dz=document.getElementById('dz');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+dz.addEventListener('drop',e=>{
+  e.preventDefault();dz.classList.remove('over');
+  const f=e.dataTransfer.files[0];
+  if(f){
+    // Assign to file input so the same upload handler works
+    try{
+      const dt=new DataTransfer();dt.items.add(f);
+      document.getElementById('fi').files=dt.files;
+    }catch(_){}
+    onFileSelect(f);
+  }
+});
+document.getElementById('btn-upload').addEventListener('click',async()=>{
+  if(!selectedFile){toast('Select a file first','info');return}
+  const btn=document.getElementById('btn-upload');setLoad(btn,true);
+  toast('Uploading and analysing…','info',30000);
+  const fd=new FormData();fd.append('file',selectedFile);
+  const r=await api('/api/upload',{method:'POST',body:fd});
+  setLoad(btn,false);
+  if(r.status==='ok'){
+    toast(r.message||'Uploaded!','success');
+    schemaCache=null;
+    await loadDatasetList();
+    await loadSidebar();
+    go('overview');
+  } else {
+    toast('Upload failed: '+(r.message||'unknown error'),'error',8000);
+  }
+});
+
+async function loadDatasetList(){
+  const r=await api('/api/datasets');
+  if(r.status!=='ok') return;
+  const el=document.getElementById('dataset-list');
+  if(!r.data.length){el.innerHTML='<p style="color:var(--mut);font-size:.82rem;padding:8px">No datasets loaded.</p>';return}
+  el.innerHTML=`<table><thead><tr><th>Name</th><th>Rows</th><th>Cols</th><th>Uploaded</th><th>Actions</th></tr></thead><tbody>`+
+  r.data.map(d=>`<tr>
+    <td><b>${d.name}</b>${d.is_active?'<span class="badge b-grn" style="margin-left:6px">Active</span>':''}</td>
+    <td>${fmtN(d.rows)}</td><td>${d.cols}</td>
+    <td style="font-size:.75rem;color:var(--mut)">${d.uploaded_at}</td>
+    <td style="display:flex;gap:6px">
+      ${!d.is_active?`<button class="btn btn-p btn-sm" onclick="setActive('${d.name}')">Set Active</button>`:''}
+      <button class="btn btn-ghost btn-sm" onclick="delDataset('${d.name}')">Delete</button>
+    </td>
+  </tr>`).join('')+'</tbody></table>';
+}
+async function setActive(name){
+  const r=await api('/api/datasets/active',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});
+  if(r.status==='ok'){toast(`'${name}' is now active`,'success');schemaCache=null;loadDatasetList();loadSidebar();loadOverview();}
+  else toast('Failed: '+r.message,'error');
+}
+async function delDataset(name){
+  const r=await api(`/api/datasets/${encodeURIComponent(name)}`,{method:'DELETE'});
+  if(r.status==='ok'){toast(`Deleted '${name}'`,'info');loadDatasetList();loadSidebar();}
+  else toast('Failed: '+r.message,'error');
+}
+
+// ── PDF ───────────────────────────────────────────────────────────────────────
+document.getElementById('btn-pdf').addEventListener('click',async()=>{
+  const btn=document.getElementById('btn-pdf');setLoad(btn,true);
+  toast('Generating PDF…','info',15000);
+  try{
+    const r=await fetch('/api/export/pdf',{method:'POST'});
+    const ct=r.headers.get('content-type')||'';
+    if(!r.ok||ct.includes('application/json')){
+      let msg='Unknown error';try{const j=await r.json();msg=j.message||msg}catch(_){}
+      toast('PDF Error: '+msg,'error',8000);return;
+    }
+    const b=await r.blob();
+    if(!b||b.size<100){toast('PDF empty — check server logs','error');return}
+    const u=URL.createObjectURL(b);const a=document.createElement('a');
+    a.href=u;a.download='RetailIQ_Report_'+new Date().toISOString().slice(0,10)+'.pdf';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(u),5000);
+    toast('PDF downloaded!','success');
+  }catch(e){toast('PDF failed: '+e,'error',8000);}
+  finally{setLoad(btn,false)}
+});
+
+// ── Freq toggles ──────────────────────────────────────────────────────────────
+document.querySelectorAll('[data-freq]').forEach(b=>b.addEventListener('click',async()=>{
+  document.querySelectorAll('[data-freq]').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  const r=await api(`/api/timeseries?freq=${b.dataset.freq}`);
+  if(r.status==='ok'){
+    mkChart('ch-trend','line',{
+      labels:r.data.map(x=>x.period),
+      datasets:[{label:'value',data:r.data.map(x=>x.value),borderColor:'#6366f1',
+        backgroundColor:'rgba(99,102,241,.1)',fill:true,tension:0.4,pointRadius:2,borderWidth:2}]
+    },{plugins:{legend:{display:false}}});
+  }
+}));
+document.querySelectorAll('[data-days]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('[data-days]').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');loadDaily(parseInt(b.dataset.days));
+}));
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+async function init(){
+  const health=await api('/api/health');
+  const overlay=document.getElementById('no-data-overlay');
+  if(!health.has_data){
+    overlay.style.display='flex';
+  } else {
+    overlay.style.display='none';
+    loadOverview();
+  }
+  loadDatasetList();
+  const sc=await api('/api/schema');
+  if(sc.status==='ok') schemaCache=sc.data;
+  loadSidebar();
+}
+init();
+</script>
+</body>
+</html>

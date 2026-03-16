@@ -1,0 +1,15 @@
+venv/
+env/
+ENV/
+__pycache__/
+*.pyc
+uploads/store/
+models/
+logs/
+exports/
+.env
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.bak
